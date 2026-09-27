@@ -102,4 +102,4 @@ These are planning topics, not legal or tax advice. Requirements may depend on l
 
 ## Current prototype boundary
 
-The repository starter is a static front-end concept with illustrative listings. It has no account system, live availability, real search service, backend, reservation, payment, payout, map, or verified property data. Do not present the current cards as bookable inventory.
+The repository starter is a static front-end concept with illustrative listings. Guest/host demo profiles, saved stays, and host listing drafts are stored in the visitor's browser local storage and are not real authenticated accounts or shared marketplace data. It has no account authentication, live availability, backend, reservation, payment, payout, map, or verified property data. Do not present the current cards as bookable inventory.

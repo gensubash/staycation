@@ -17,11 +17,11 @@ You can also open `index.html` directly, though a local server is a more represe
 ## What is in this prototype?
 
 - A responsive New Hampshire discovery page with sample property cards.
-- Category filters, destination search, saved-stay buttons, and listing-detail dialogs.
-- An introductory host flow to show how guest and host experiences could coexist.
-- Explicit preview messages for booking, accounts, and maps, which are not implemented or connected to payment processing.
+- Category filters, destination search, saved stays, and listing-detail dialogs.
+- Guest and host demo profiles, a guest saved-stays dashboard, and a host dashboard with locally saved listing drafts.
+- Clear preview messages for bookings and maps, which are not connected to live services.
 
-Listings, prices, reviews, and descriptions are illustrative demo content, not verified properties or bookable offers. This front end does not collect personal information, create accounts, accept reservations, or process payments.
+Listings, prices, reviews, and descriptions are illustrative demo content, not verified properties or bookable offers. The demo profile asks only for a display name and role; it does not ask for a password or email. Profiles, saved stays, and host listing drafts are stored in that browser's local storage, so they are not real authenticated accounts, are not private from other people using the same browser, and are not shared between visitors or devices. Do not put sensitive information in a demo listing. This front end does not publish listings, accept reservations, or process payments.
 
 ## Project plan
 
