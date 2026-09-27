@@ -29,17 +29,17 @@ See [PRODUCT_PLAN.md](./PRODUCT_PLAN.md) for the recommended marketplace MVP, pr
 
 ## Publish and share
 
-This workspace is not currently connected to a GitHub repository. To publish it, install Git, create an empty `staycation` repository in your signed-in GitHub account, then run these commands from this folder (replace `<your-account>`):
+Repository: [github.com/gensubash/staycation](https://github.com/gensubash/staycation)  
+Hosted preview: [gensubash.github.io/staycation](https://gensubash.github.io/staycation/)
+
+GitHub Pages is configured to publish the `main` branch from the repository root. To publish later changes with Git installed, run these commands from the project folder:
 
 ```powershell
-git init
 git add .
 git commit -m "Create Staycation prototype"
-git branch -M main
-git remote add origin https://github.com/<your-account>/staycation.git
 git push -u origin main
 ```
 
-For a hosted, shareable preview, open the repository's **Settings → Pages**, choose **Deploy from a branch**, select `main` and `/(root)`, then save. After the Pages deployment finishes, GitHub will show the public site URL in that section. Every subsequent push to `main` republishes the static preview.
+GitHub Pages republishes the static preview after each push to `main`. You can also edit files directly on GitHub; commits to `main` trigger a new deployment.
 
-Choose a public repository if you want to use free GitHub Pages; private-repository Pages availability depends on your GitHub plan. This publishes only a static design preview. Live bookings and payments require a backend and the security/compliance work in the product plan.
+This is a public repository and static design preview. Live bookings and payments require a backend and the security/compliance work in the product plan.
