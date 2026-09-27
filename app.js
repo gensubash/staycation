@@ -63,7 +63,8 @@ let toastTimer;
 const storageKeys = {
   profile: "staycation-demo-profile",
   favorites: "staycation-demo-favorites",
-  listings: "staycation-demo-listings"
+  listings: "staycation-demo-listings",
+  reservations: "staycation-demo-reservations"
 };
 
 function readStoredValue(key, fallback, isValid) {
@@ -114,14 +115,56 @@ const hostListings = readStoredValue(
     listing && ["title", "city", "description"].every((key) => typeof listing[key] === "string")
     && Number.isFinite(listing.price) && Number.isInteger(listing.guests))
 );
+const reservations = readStoredValue(
+  storageKeys.reservations,
+  [],
+  (value) => Array.isArray(value) && value.every((reservation) =>
+    reservation && typeof reservation.id === "string"
+    && Number.isInteger(reservation.stayIndex) && reservation.stayIndex >= 0 && reservation.stayIndex < stays.length
+    && typeof reservation.guestName === "string"
+    && typeof reservation.checkIn === "string" && typeof reservation.checkOut === "string"
+    && Number.isInteger(reservation.guests) && Number.isInteger(reservation.nights)
+    && Number.isFinite(reservation.total) && ["demo-reserved", "cancelled"].includes(reservation.status))
+);
 const favorites = new Set(favoriteIndices);
+let searchCheckIn = "";
+let searchCheckOut = "";
+let searchGuestCount = 0;
+let pendingBookingStay = null;
+
+function localDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function nightsBetween(checkIn, checkOut) {
+  const [startYear, startMonth, startDay] = checkIn.split("-").map(Number);
+  const [endYear, endMonth, endDay] = checkOut.split("-").map(Number);
+  const start = Date.UTC(startYear, startMonth - 1, startDay);
+  const end = Date.UTC(endYear, endMonth - 1, endDay);
+  return Math.round((end - start) / 86400000);
+}
+
+function hasAvailability(stayIndex, checkIn, checkOut) {
+  return !reservations.some((reservation) =>
+    reservation.status === "demo-reserved"
+    && reservation.stayIndex === stayIndex
+    && checkIn < reservation.checkOut
+    && checkOut > reservation.checkIn
+  );
+}
 
 function renderStays() {
   const destination = searchDestination.trim().toLocaleLowerCase();
   const visible = stays.filter((stay) => {
     const matchesType = selectedType === "all" || stay.type === selectedType;
     const matchesDestination = !destination || `${stay.name} ${stay.place} ${stay.type}`.toLocaleLowerCase().includes(destination);
-    return matchesType && matchesDestination;
+    const matchesGuests = !searchGuestCount || stay.guests >= searchGuestCount;
+    const index = stays.indexOf(stay);
+    const matchesDates = !searchCheckIn || !searchCheckOut || hasAvailability(index, searchCheckIn, searchCheckOut);
+    return matchesType && matchesDestination && matchesGuests && matchesDates;
   });
 
   grid.innerHTML = visible.map((stay) => {
@@ -147,9 +190,13 @@ function renderStays() {
 
   grid.hidden = visible.length === 0;
   emptyState.hidden = visible.length !== 0;
+  const countLabel = visible.length === 1 ? "stay" : "stays";
+  const availabilityLabel = searchCheckIn && searchCheckOut ? "available " : "";
   resultsCount.textContent = searchDestination
-    ? `${visible.length} ${visible.length === 1 ? "stay" : "stays"} for “${searchDestination}”`
-    : `${visible.length} thoughtful places, picked for you`;
+    ? `${visible.length} ${availabilityLabel}${countLabel} for “${searchDestination}”`
+    : searchCheckIn && searchCheckOut
+      ? `${visible.length} ${availabilityLabel}${countLabel}`
+      : `${visible.length} thoughtful ${visible.length === 1 ? "place" : "places"}, picked for you`;
 }
 
 function showToast(message) {
@@ -198,6 +245,7 @@ function renderAccount() {
 
 function renderGuestDashboard() {
   const saved = Array.from(favorites).map((index) => stays[index]).filter(Boolean);
+  const trips = reservations.filter((reservation) => reservation.guestName === demoProfile.name);
   return `
     <section class="dashboard-section">
       <div class="dashboard-heading"><h3>Saved stays</h3><span>${saved.length}</span></div>
@@ -211,9 +259,27 @@ function renderGuestDashboard() {
         : `<div class="dashboard-empty"><strong>Your next favorite is out there.</strong><span>Tap the heart on any stay to save it here.</span><button class="text-button" id="browse-stays" type="button">Explore stays</button></div>`}
     </section>
     <section class="dashboard-section">
-      <div class="dashboard-heading"><h3>Your trips</h3><span>0</span></div>
-      <div class="dashboard-empty"><strong>No trips booked yet.</strong><span>Reservations are not enabled in this preview.</span></div>
+      <div class="dashboard-heading"><h3>Your trips</h3><span>${trips.filter((trip) => trip.status === "demo-reserved").length}</span></div>
+      ${trips.length
+        ? `<div class="trip-list">${trips.map((trip) => {
+          const stay = stays[trip.stayIndex];
+          return `<article class="trip-card ${trip.status === "cancelled" ? "cancelled" : ""}">
+            <div class="trip-card-heading"><strong>${escapeHTML(stay.name)}</strong><span class="reservation-badge">${trip.status === "cancelled" ? "Cancelled" : "Demo reservation · unpaid"}</span></div>
+            <span class="trip-dates">${formatDateRange(trip.checkIn, trip.checkOut)} · ${trip.guests} guest${trip.guests === 1 ? "" : "s"}</span>
+            <span class="trip-total">Sample total: <strong>$${trip.total.toFixed(2)}</strong></span>
+            ${trip.status === "demo-reserved" ? `<button class="text-button" type="button" data-cancel-reservation="${escapeHTML(trip.id)}">Cancel demo reservation</button>` : ""}
+          </article>`;
+        }).join("")}
+        <p class="demo-disclaimer">These are unpaid local demo reservations. They are not confirmed bookings, and no payment was collected.</p>`
+        : `<div class="dashboard-empty"><strong>No trips yet.</strong><span>Choose a stay and dates to try the booking preview. Checkout is simulated; no payment is collected.</span></div>`}
     </section>`;
+}
+
+function formatDateRange(checkIn, checkOut) {
+  const start = new Date(`${checkIn}T12:00:00`);
+  const end = new Date(`${checkOut}T12:00:00`);
+  const options = { month: "short", day: "numeric" };
+  return `${start.toLocaleDateString(undefined, options)} – ${end.toLocaleDateString(undefined, options)}`;
 }
 
 function renderHostDashboard() {
@@ -278,11 +344,119 @@ function openStayModal(stay) {
     <p>${stay.description}</p>
     <div class="modal-details"><span>★ ${stay.rating} (${stay.reviews} reviews)</span><span>${stay.guests} guests</span><span>${stay.bedrooms} bedroom${stay.bedrooms === 1 ? "" : "s"}</span><span>${stay.beds} beds</span></div>
     <p><strong>$${stay.price}</strong> per night · sample price, before taxes</p>
-    <button class="modal-action" type="button" id="request-booking">Request to book <span aria-hidden="true">→</span></button>`;
+    <p class="demo-disclaimer">Demo listing only. Availability and prices are examples, not live offers.</p>
+    <button class="modal-action" type="button" id="request-booking">Choose dates <span aria-hidden="true">→</span></button>`;
   modal.showModal();
   document.querySelector("#request-booking").addEventListener("click", () => {
-    modal.close();
-    showToast("Booking and secure payments are planned for the next build.");
+    if (!demoProfile) {
+      pendingBookingStay = stays.indexOf(stay);
+      renderAccount();
+      modalContent.querySelector('input[name="role"][value="guest"]').checked = true;
+      return;
+    }
+    if (demoProfile.role !== "guest") {
+      modalContent.innerHTML = `
+        <p class="modal-kicker">Guest account needed</p>
+        <h2 id="modal-title">Booking starts with a guest profile.</h2>
+        <p>Switch this demo profile to guest mode before trying the booking flow.</p>
+        <button class="modal-action" id="switch-to-guest-booking" type="button">Switch to guest <span aria-hidden="true">→</span></button>
+        <p class="demo-disclaimer">Demo only: no real reservation or payment will be created.</p>`;
+      document.querySelector("#switch-to-guest-booking").addEventListener("click", () => {
+        demoProfile.role = "guest";
+        if (writeStoredValue(storageKeys.profile, demoProfile)) {
+          updateProfileButton();
+          openBookingModal(stay);
+        }
+      });
+      return;
+    }
+    openBookingModal(stay);
+  });
+}
+
+function openBookingModal(stay, booking = null) {
+  const stayIndex = stays.indexOf(stay);
+  const checkIn = booking?.checkIn || (searchCheckIn && searchCheckOut ? searchCheckIn : "");
+  const checkOut = booking?.checkOut || (searchCheckIn && searchCheckOut ? searchCheckOut : "");
+  const guests = booking?.guests || searchGuestCount || 1;
+  const minimumDate = localDateString();
+  modalContent.innerHTML = `
+    <p class="modal-kicker">A few details, then a clear price</p>
+    <h2 id="modal-title">Plan your stay.</h2>
+    <div class="booking-summary">
+      <img src="${imageUrl(stay.photo, 240)}" alt="">
+      <span><strong>${escapeHTML(stay.name)}</strong><small>${escapeHTML(stay.place)}</small><small>$${stay.price} per night · demo price</small></span>
+    </div>
+    <form class="booking-form" id="booking-form" data-stay-index="${stayIndex}">
+      <div class="form-row">
+        <label><span class="form-label">Check-in</span><input class="form-input" name="checkIn" type="date" min="${minimumDate}" value="${checkIn}" required></label>
+        <label><span class="form-label">Check-out</span><input class="form-input" name="checkOut" type="date" min="${minimumDate}" value="${checkOut}" required></label>
+      </div>
+      <label class="form-label" for="booking-guests">Guests (up to ${stay.guests})</label>
+      <input class="form-input" id="booking-guests" name="guests" type="number" min="1" max="${stay.guests}" value="${Math.min(guests, stay.guests)}" required>
+      <p class="booking-error" id="booking-error" role="alert" hidden></p>
+      <button class="modal-action" type="submit">Review price <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="demo-disclaimer">This is a booking demo using sample listing data. It does not check a live calendar or charge you.</p>`;
+  modal.showModal();
+  const startInput = modalContent.querySelector('[name="checkIn"]');
+  const endInput = modalContent.querySelector('[name="checkOut"]');
+  startInput.addEventListener("change", () => {
+    endInput.min = startInput.value || minimumDate;
+    if (endInput.value && endInput.value <= startInput.value) endInput.value = "";
+  });
+}
+
+function renderCheckout(stay, details) {
+  const nights = nightsBetween(details.checkIn, details.checkOut);
+  const accommodation = stay.price * nights;
+  const serviceFee = Math.round(accommodation * 0.1 * 100) / 100;
+  const total = accommodation + serviceFee;
+  const safeName = escapeHTML(demoProfile.name);
+  modalContent.innerHTML = `
+    <p class="modal-kicker">Step 2 of 2 · Review & checkout</p>
+    <h2 id="modal-title">Your getaway, at a glance.</h2>
+    <div class="checkout-stay"><img src="${imageUrl(stay.photo, 320)}" alt=""><div><strong>${escapeHTML(stay.name)}</strong><span>${escapeHTML(stay.place)}</span><span>${formatDateRange(details.checkIn, details.checkOut)} · ${details.guests} guest${details.guests === 1 ? "" : "s"}</span></div></div>
+    <div class="price-breakdown">
+      <div><span>$${stay.price} × ${nights} night${nights === 1 ? "" : "s"}</span><span>$${accommodation.toFixed(2)}</span></div>
+      <div><span>Sample service fee (10%)</span><span>$${serviceFee.toFixed(2)}</span></div>
+      <div class="price-total"><strong>Estimated total</strong><strong>$${total.toFixed(2)}</strong></div>
+    </div>
+    <section class="payment-placeholder" aria-label="Payment information">
+      <span class="payment-icon" aria-hidden="true">▣</span>
+      <div><strong>Secure payment isn't connected yet</strong><p>In a live service, checkout would continue on the payment provider's secure page. This prototype never asks for or stores card details.</p></div>
+    </section>
+    <button class="modal-action" id="save-demo-reservation" type="button">Save demo reservation (no payment)</button>
+    <button class="checkout-back" id="edit-booking" type="button">← Change dates or guests</button>
+    <p class="demo-disclaimer">Sample estimate only: no tax, cleaning, or other fees are included. This unpaid demo reservation is not a real booking or confirmation.</p>`;
+  modal.showModal();
+
+  document.querySelector("#edit-booking").addEventListener("click", () => openBookingModal(stay, details));
+  document.querySelector("#save-demo-reservation").addEventListener("click", () => {
+    const reservation = {
+      id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      stayIndex: stays.indexOf(stay),
+      guestName: demoProfile.name,
+      checkIn: details.checkIn,
+      checkOut: details.checkOut,
+      guests: details.guests,
+      nights,
+      total,
+      status: "demo-reserved"
+    };
+    reservations.push(reservation);
+    if (!writeStoredValue(storageKeys.reservations, reservations)) {
+      reservations.pop();
+      return;
+    }
+    modalContent.innerHTML = `
+      <p class="modal-kicker">Demo flow complete · no charge made</p>
+      <h2 id="modal-title">Your sample stay is saved.</h2>
+      <p>${escapeHTML(stay.name)} · ${formatDateRange(details.checkIn, details.checkOut)} · ${details.guests} guest${details.guests === 1 ? "" : "s"}</p>
+      <div class="price-total confirmation-total"><strong>Sample total</strong><strong>$${total.toFixed(2)}</strong></div>
+      <div class="payment-placeholder"><span class="payment-icon" aria-hidden="true">✓</span><div><strong>No payment was collected</strong><p>This unpaid reservation exists only in this browser. It is not sent to a host, and the dates are not actually held.</p></div></div>
+      <button class="modal-action" id="view-demo-trip" type="button">View my trips</button>`;
+    document.querySelector("#view-demo-trip").addEventListener("click", renderAccount);
   });
 }
 
@@ -298,13 +472,41 @@ document.querySelectorAll(".category").forEach((button) => {
 document.querySelector("#search-form").addEventListener("submit", (event) => {
   event.preventDefault();
   searchDestination = document.querySelector("#destination").value;
+  searchCheckIn = document.querySelector("#check-in-search").value;
+  searchCheckOut = document.querySelector("#check-out-search").value;
+  searchGuestCount = Number(document.querySelector("#guests").value) || 0;
+  if (searchCheckIn && searchCheckIn < localDateString()) {
+    showToast("Choose a check-in date from today onward.");
+    return;
+  }
+  if (Boolean(searchCheckIn) !== Boolean(searchCheckOut) || (searchCheckOut && searchCheckOut <= searchCheckIn)) {
+    showToast("Add a valid check-in and check-out date.");
+    return;
+  }
   renderStays();
   document.querySelector("#stays").scrollIntoView({ behavior: "smooth" });
 });
 
+const searchCheckInInput = document.querySelector("#check-in-search");
+const searchCheckOutInput = document.querySelector("#check-out-search");
+searchCheckInInput.min = localDateString();
+searchCheckOutInput.min = localDateString();
+searchCheckInInput.addEventListener("change", () => {
+  searchCheckOutInput.min = searchCheckInInput.value || localDateString();
+  if (searchCheckOutInput.value && searchCheckOutInput.value <= searchCheckInInput.value) {
+    searchCheckOutInput.value = "";
+  }
+});
+
 document.querySelector("#clear-search").addEventListener("click", () => {
   document.querySelector("#destination").value = "";
+  document.querySelector("#check-in-search").value = "";
+  document.querySelector("#check-out-search").value = "";
+  document.querySelector("#guests").value = "";
   searchDestination = "";
+  searchCheckIn = "";
+  searchCheckOut = "";
+  searchGuestCount = 0;
   selectedType = "all";
   document.querySelectorAll(".category").forEach((button) => button.classList.toggle("active", button.dataset.filter === "all"));
   renderStays();
@@ -364,9 +566,38 @@ modalContent.addEventListener("submit", (event) => {
     if (writeStoredValue(storageKeys.profile, demoProfile)) {
       renderAccount();
       updateProfileButton();
+      if (pendingBookingStay !== null && role === "guest") {
+        const stay = stays[pendingBookingStay];
+        pendingBookingStay = null;
+        if (stay) openBookingModal(stay);
+      }
     } else {
       demoProfile = null;
     }
+    return;
+  }
+
+  if (form.id === "booking-form") {
+    const stay = stays[Number(form.dataset.stayIndex)];
+    const details = {
+      checkIn: String(formData.get("checkIn")),
+      checkOut: String(formData.get("checkOut")),
+      guests: Number(formData.get("guests"))
+    };
+    const error = document.querySelector("#booking-error");
+    const nights = nightsBetween(details.checkIn, details.checkOut);
+    if (!stay || details.checkIn < localDateString() || nights < 1 || !Number.isInteger(details.guests)
+        || details.guests < 1 || details.guests > stay.guests) {
+      error.textContent = `Choose valid dates and 1–${stay?.guests || 0} guests.`;
+      error.hidden = false;
+      return;
+    }
+    if (!hasAvailability(stays.indexOf(stay), details.checkIn, details.checkOut)) {
+      error.textContent = "Those dates overlap another demo reservation in this browser. Choose different dates.";
+      error.hidden = false;
+      return;
+    }
+    renderCheckout(stay, details);
     return;
   }
 
@@ -419,6 +650,16 @@ modalContent.addEventListener("click", (event) => {
   } else if (target.id === "browse-stays") {
     modal.close();
     document.querySelector("#stays").scrollIntoView({ behavior: "smooth" });
+  } else if (target.hasAttribute("data-cancel-reservation")) {
+    const reservation = reservations.find((item) => item.id === target.dataset.cancelReservation);
+    if (!reservation || reservation.status !== "demo-reserved") return;
+    reservation.status = "cancelled";
+    if (writeStoredValue(storageKeys.reservations, reservations)) {
+      renderAccount();
+      showToast("Demo reservation cancelled. No payment was collected.");
+    } else {
+      reservation.status = "demo-reserved";
+    }
   } else if (target.hasAttribute("data-open-stay")) {
     const stay = stays[Number(target.dataset.openStay)];
     if (stay) openStayModal(stay);

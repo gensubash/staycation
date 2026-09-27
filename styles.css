@@ -62,6 +62,8 @@ h1, h2, h3, p { margin-top: 0; }
 .field-content { display: flex; flex-direction: column; min-width: 0; gap: 5px; }
 .field-label { font-size: 11px; font-weight: 700; color: #26392f; }
 .field-content input { width: 100%; padding: 0; outline: 0; border: 0; background: transparent; color: #626e65; font-size: 11px; }
+.date-inputs { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.date-inputs input { min-width: 0; font-size: 10px; color: #626e65; }
 .field-content input::placeholder { color: #999d96; opacity: 1; }
 .search-divider { width: 1px; height: 35px; background: #e8e7df; }
 .search-submit { height: 49px; padding: 0 15px; background: var(--green); border: 0; border-radius: 4px; color: #fff; display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .2s, transform .2s; }
@@ -186,6 +188,35 @@ h1, h2, h3, p { margin-top: 0; }
 .host-next-step { display: grid; gap: 5px; margin-top: 14px; padding: 12px; background: #edf1eb; border-left: 2px solid #75907a; }
 .host-next-step strong { color: #425a47; font-size: 10px; }
 .host-next-step span { color: #777f75; font-size: 9px; line-height: 1.5; }
+.booking-summary, .checkout-stay { display: flex; align-items: center; gap: 12px; margin: 15px 0; padding: 10px; border: 1px solid #edede7; border-radius: 3px; }
+.booking-summary img { width: 66px; height: 55px; border-radius: 2px; object-fit: cover; }
+.booking-summary > span, .checkout-stay > div { display: grid; gap: 4px; min-width: 0; }
+.booking-summary strong, .checkout-stay strong { color: #35483a; font-size: 11px; }
+.booking-summary small, .checkout-stay span { color: #81877e; font-size: 9px; }
+.booking-form { display: grid; gap: 10px; margin-top: 15px; }
+.booking-error { margin: 0; padding: 9px 10px; border-radius: 3px; color: #8b3932 !important; background: #faeae6; font-size: 10px !important; }
+.checkout-stay { align-items: stretch; }
+.checkout-stay img { width: 76px; min-height: 66px; border-radius: 2px; object-fit: cover; }
+.checkout-stay > div { align-content: center; }
+.price-breakdown { display: grid; gap: 11px; margin: 18px 0; padding: 0 2px; }
+.price-breakdown > div, .price-total { display: flex; justify-content: space-between; gap: 12px; color: #69746a; font-size: 11px; }
+.price-total { padding-top: 12px; border-top: 1px solid #e6e7df; color: #34483a; }
+.confirmation-total { margin: 15px 0; padding: 12px 0; border-top: 1px solid #e6e7df; border-bottom: 1px solid #e6e7df; }
+.payment-placeholder { display: flex; gap: 11px; align-items: flex-start; padding: 13px; border: 1px solid #e4e8df; border-radius: 3px; background: #f2f5ef; }
+.payment-icon { flex: 0 0 auto; color: #4c7054; font-size: 19px; }
+.payment-placeholder strong { color: #3d5945; font-size: 10px; }
+.payment-placeholder p { margin: 5px 0 0; color: #737c72; font-size: 9px; line-height: 1.5; }
+.checkout-back { display: block; margin: 12px auto 0; padding: 3px 0; border: 0; border-bottom: 1px solid #aeb9ac; color: #536b58; background: transparent; font-size: 10px; cursor: pointer; }
+.trip-list { display: grid; gap: 8px; }
+.trip-card { display: grid; gap: 7px; padding: 11px; border: 1px solid #edede7; border-radius: 3px; }
+.trip-card.cancelled { opacity: .65; }
+.trip-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.trip-card-heading > strong { color: #3e5043; font-size: 10px; }
+.reservation-badge { padding: 4px 6px; border-radius: 9px; color: #75623f; background: #f4efdf; font-size: 8px; white-space: nowrap; }
+.trip-dates { color: #737c72; font-size: 9px; }
+.trip-total { color: #737c72; font-size: 9px; }
+.trip-total strong { color: #3e5043; }
+.trip-card > .text-button { justify-self: start; font-size: 9px; }
 .toast { position: fixed; z-index: 5; bottom: 24px; left: 50%; padding: 11px 17px; border-radius: 4px; color: white; background: #2f4c38; font-size: 12px; box-shadow: 0 7px 24px rgba(20,35,26,.22); opacity: 0; pointer-events: none; transform: translate(-50%, 9px); transition: all .22s; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
@@ -224,6 +255,8 @@ h1, h2, h3, p { margin-top: 0; }
   .field-icon { width: 17px; height: 17px; }
   .field-label { font-size: 10px; }
   .field-content input { font-size: 10px; }
+  .date-inputs { gap: 2px; }
+  .date-inputs input { font-size: 8px; }
   .search-submit { height: 43px; align-self: center; }
   .stays-section { padding: 59px 17px 58px; }
   .section-heading { align-items: flex-start; gap: 10px; }

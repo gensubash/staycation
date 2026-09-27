@@ -17,11 +17,12 @@ You can also open `index.html` directly, though a local server is a more represe
 ## What is in this prototype?
 
 - A responsive New Hampshire discovery page with sample property cards.
-- Category filters, destination search, saved stays, and listing-detail dialogs.
+- Category and destination filters, date/guest search, saved stays, and listing-detail dialogs.
 - Guest and host demo profiles, a guest saved-stays dashboard, and a host dashboard with locally saved listing drafts.
-- Clear preview messages for bookings and maps, which are not connected to live services.
+- A demo booking journey with date/guest validation, a sample price breakdown, local reservation records, and a guest trips view.
+- Clear preview messages for payments and maps, which are not connected to live services.
 
-Listings, prices, reviews, and descriptions are illustrative demo content, not verified properties or bookable offers. The demo profile asks only for a display name and role; it does not ask for a password or email. Profiles, saved stays, and host listing drafts are stored in that browser's local storage, so they are not real authenticated accounts, are not private from other people using the same browser, and are not shared between visitors or devices. Do not put sensitive information in a demo listing. This front end does not publish listings, accept reservations, or process payments.
+Listings, prices, reviews, and descriptions are illustrative demo content, not verified properties or bookable offers. The demo profile asks only for a display name and role; it does not ask for a password or email. Profiles, saved stays, listing drafts, and unpaid demo reservation records are stored in that browser's local storage. They are not real authenticated accounts, are not private from other people using the same browser, and are not shared between visitors or devices. Do not put sensitive information in a demo listing. Demo reservations do not block real availability, contact a host, confirm a real stay, or collect payment. The checkout preview deliberately does not ask for card details. Real secure payments require a trusted backend and a payment provider's hosted checkout or tokenized flow; never collect or store raw card details in this static site.
 
 ## Project plan
 

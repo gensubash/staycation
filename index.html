@@ -53,12 +53,12 @@
           <span class="search-divider" aria-hidden="true"></span>
           <label class="search-field">
             <span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 3v4M16.5 3v4M4 9.5h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
-            <span class="field-content"><span class="field-label">When</span><input id="dates" name="dates" type="text" placeholder="Add dates" aria-label="Travel dates"></span>
+            <span class="field-content"><span class="field-label">When</span><span class="date-inputs"><input id="check-in-search" name="checkIn" type="date" aria-label="Check-in"><input id="check-out-search" name="checkOut" type="date" aria-label="Check-out"></span></span>
           </label>
           <span class="search-divider" aria-hidden="true"></span>
           <label class="search-field guest-field">
             <span class="field-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM16 3.2a4 4 0 0 1 0 7.6m1 3.7a4 4 0 0 1 4 4V20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
-            <span class="field-content"><span class="field-label">Who</span><input id="guests" name="guests" type="text" placeholder="Add guests" inputmode="numeric" aria-label="Number of guests"></span>
+            <span class="field-content"><span class="field-label">Who</span><input id="guests" name="guests" type="number" min="1" max="30" placeholder="Add guests" aria-label="Number of guests"></span>
           </label>
           <button class="search-submit" type="submit"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="2"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Search</span></button>
         </form>
